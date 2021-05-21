@@ -3,12 +3,14 @@
 E::E(string name)
 {
 	this->name = name;
+	this->offset = "";
 }
 
 E::E(string name, string real_name)
 {
 	this->name = name;
 	this->real_name = real_name;
+	this->offset = "";
 }
 
 bool operator < (const Item& one, const Item& other)
@@ -26,11 +28,11 @@ Parser::Parser(const char* filename)
 	now_level = 0;
 	temp_var = 0;
 	read_grammars(filename);
-	output_production("produtions.txt");
 	get_first();
 	get_follow();
 	get_itemsets();
 	get_action_goto();
+	// output_action_goto("D:\\programing\\visual studio code\\C++\\compile\\resources\\action_goto.txt");
 }
 
 //是否是终结符
@@ -38,7 +40,7 @@ bool Parser::is_terminal(string s)
 {
 	if (s == "int" || s == "void" || s == "if" || s == "while" || s == "else" || s == "return" ||
 		s == "+" || s == "-" || s == "*" || s == "/" || s == "=" || s == "==" || s == ">" || s == "<" || s == "!=" || s == ">=" || s == "<=" ||
-		s == ";" || s == "," || s == "(" || s == ")" || s == "{" || s == "}" || s == "ID" || s == "NUM")
+		s == ";" || s == "," || s == "(" || s == ")" || s == "{" || s == "}" || s == "ID" || s == "NUM" || s == "[" || s == "]")
 		return true;
 	return false;
 }
@@ -130,8 +132,15 @@ void Parser::get_first()
 				}
 			}
 		}
-
 	}
+	// cout << "first:\n";
+	// for (auto& fi : first) {
+	// 	cout << fi.first << " ";
+	// 	for (auto& ri : fi.second) {
+	// 		cout << ri << " ";
+	// 	}
+	// 	cout << endl;
+	// }
 }
 
 //获取follow集
@@ -207,6 +216,14 @@ void Parser::get_follow()
 			}
 		}
 	}
+	// cout << "follow:\n";
+	// for (auto& fi : follow) {
+	// 	cout << fi.first << " ";
+	// 	for (auto& ri : fi.second) {
+	// 		cout << ri << " ";
+	// 	}
+	// 	cout << endl;
+	// }
 }
 
 //获取闭包
@@ -221,7 +238,7 @@ set<Item> Parser::get_closure(Item item)
 	else//.的右边是非终结符
 	{
 		item_temp.insert(item);
-		for (int i = 0; i < productions.size(); ++i)
+		for (unsigned int i = 0; i < productions.size(); ++i)
 		{
 			if (productions[i].left == productions[item.pid].right[item.pointidx])//产生式的左部 == .右边的非终结符
 			{
@@ -239,8 +256,8 @@ set<Item> Parser::get_closure(Item item)
 //获取项目集规范族
 void Parser::get_itemsets()
 {
-	dfa.states.push_back(get_closure(Item{0 ,0}));//第一个状态
-	for (int i = 0; i < dfa.states.size(); ++i)//遍历每一个状态
+	dfa.states.push_back(get_closure(Item{0, 0}));//第一个状态
+	for (unsigned int i = 0; i < dfa.states.size(); ++i)//遍历每一个状态
 	{
 		for (set<Item>::iterator iter = dfa.states[i].begin(); iter != dfa.states[i].end(); iter++)//遍历状态的每一个项目
 		{
@@ -278,7 +295,7 @@ void Parser::get_itemsets()
 //获取action和goto
 void Parser::get_action_goto()
 {
-	for (int i = 0; i < dfa.states.size(); i++)//遍历每一个状态
+	for (unsigned int i = 0; i < dfa.states.size(); i++)//遍历每一个状态
 	{
 		for (set<Item>::iterator iter = dfa.states[i].begin(); iter != dfa.states[i].end(); iter++)//对于每一个项目
 		{
@@ -310,7 +327,6 @@ void Parser::get_action_goto()
 					}
 					else//如果转移符为非终结符则GOTO
 					{
-						// action_goto[thegoto] = Move{ _goto, dfa.goTo[thegoto] };
 						action_goto[thegoto] = Move{ shift, dfa.goTo[thegoto] };
 					}
 				}
@@ -329,7 +345,7 @@ void Parser::output_dfa(const char* filename)
 	ofstream fout;
 	fout.open(filename);
 	if (!fout.is_open()) output_error("文件" + string(filename) + "打开失败");
-	for (int i = 0; i < dfa.states.size(); i++)
+	for (unsigned int i = 0; i < dfa.states.size(); i++)
 	{
 		fout << "I" << i << "= [";
 		for (set<Item>::iterator iter = dfa.states[i].begin(); iter != dfa.states[i].end(); iter++)
@@ -337,7 +353,7 @@ void Parser::output_dfa(const char* filename)
 			fout << "{";
 			Production p = productions[iter->pid];
 			fout << p.left << " -> ";
-			for (int i = 0; i < p.right.size();++i)
+			for (unsigned int i = 0; i < p.right.size();++i)
 			{
 				if (i == iter->pointidx)
 				{
@@ -379,7 +395,8 @@ void Parser::analyse(const char* filename)
 	if (!fin.is_open()) output_error("文件" + string(filename) + "打开失败");
 	symbol_stack.push("#");
 	state_stack.push(0);
-	char buf[1024];
+	// char buf[1024];
+	string buf;
 	vector<string> words;
 	vector<string> names;
 	while (fin >> buf) 
@@ -397,7 +414,7 @@ void Parser::analyse(const char* filename)
 			names.push_back("Others");
 		}
 	}
-	for (int i = 0; i < words.size(); ++i)
+	for (unsigned int i = 0; i < words.size(); ++i)
 	{
 		if (action_goto.count(Goto(state_stack.top(), words[i])) == 0) output_error("语法错误，不匹配的符号");
 		Move move = action_goto[Goto(state_stack.top(), words[i])];
@@ -445,8 +462,10 @@ void Parser::output_error(string s)
 }
 
 //获取新的临时变量
-string Parser::get_newtemp() 
+string Parser::get_newtemp(bool isarray, string offset) 
 {
+	if (isarray) 
+		return string("A") + offset;
 	return string("T") + to_string(temp_var++);
 }
 
@@ -507,7 +526,7 @@ void Parser::output_stack(ofstream& out)
 //寻找函数
 Func Parser::search_func(string ID) 
 {
-	for (int i = 0; i < funcTable.size();++i)
+	for (unsigned int i = 0; i < funcTable.size();++i)
 	{
 		if(funcTable[i].name==ID)
 		{
@@ -522,7 +541,7 @@ Func Parser::search_func(string ID)
 //寻找变量
 Var Parser::search_var(string ID) 
 {
-	for (int i = 0; i < varTable.size();++i)
+	for (unsigned int i = 0; i < varTable.size();++i)
 	{
 		if(varTable[i].name==ID)
 		{
@@ -571,15 +590,14 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 		}
 	}
 
-	for (int i = 0; i < words.size();)
+	for (unsigned int i = 0; i < words.size();)
 	{
 		output_stack(out);
-		// cout << "state:" << state_stack.top() << " words:" << words[i]<< "\n";
 		if (action_goto.count(Goto(state_stack.top(), words[i])) == 0) 
 		{
-			cout << words[i];
+			cout << i << words[i] << state_stack.top();
 			output_error(string("语法错误1"));	
-		}	
+		}
 		Move move = action_goto[Goto(state_stack.top(), words[i])];
 		if (move.act == shift) 
 		{
@@ -943,7 +961,7 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 				E add = pop_symbol();
 				E item = pop_symbol();
 				E add_expression1 = E(reduct_p.left);
-				add_expression1.real_name = get_newtemp();
+				add_expression1.real_name = get_newtemp(false, "");
 				code.emit("+", item.real_name, add_expression2.real_name, add_expression1.real_name);
 				push_symbol(add_expression1);
 				break;
@@ -954,7 +972,7 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 				E sub = pop_symbol();
 				E item = pop_symbol();
 				E add_expression1 = E(reduct_p.left);
-				add_expression1.real_name = get_newtemp();
+				add_expression1.real_name = get_newtemp(false, "");
 				code.emit("-", item.real_name, add_expression2.real_name, add_expression1.real_name);
 				push_symbol(add_expression1);
 				break;
@@ -973,7 +991,7 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 				E mul = pop_symbol();
 				E factor = pop_symbol();
 				E item1 = E(reduct_p.left);
-				item1.real_name = get_newtemp();
+				item1.real_name = get_newtemp(false, "");
 				code.emit("*", factor.real_name, item2.real_name, item1.real_name);
 				push_symbol(item1);
 				break;
@@ -984,7 +1002,7 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 				E div = pop_symbol();
 				E factor = pop_symbol();
 				E item1 = E(reduct_p.left);
-				item1.real_name = get_newtemp();
+				item1.real_name = get_newtemp(false, "");
 				code.emit("/", factor.real_name, item2.real_name, item1.real_name);
 				push_symbol(item1);
 				break;
@@ -1029,7 +1047,7 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 					{
 						code.emit("par", (*iter), "_", "_");
 					}
-					factor.real_name = get_newtemp();
+					factor.real_name = get_newtemp(false, "");
 					code.emit("call", ID.real_name, "_", "_");
 					code.emit("=", "@RETURN_PLACE", "_", factor.real_name);
 
@@ -1074,6 +1092,49 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 				push_symbol(argument_list1);
 				break;
 			}
+			case 54://array -> [ NUM ]
+			{
+				E r_bracket = pop_symbol();
+				E num = pop_symbol();
+				E l_bracket = pop_symbol();
+				E a_rray = E(reduct_p.left);
+				a_rray.offset = num.real_name + a_rray.offset;
+				push_symbol(a_rray);
+				break;
+			}
+			case 55://array -> [ NUM ] array
+			{
+				E r_array = pop_symbol();
+				E r_bracket = pop_symbol();
+				E num = pop_symbol();
+				E l_bracket = pop_symbol();
+				E a_rray = E(reduct_p.left);
+				a_rray.offset = num.real_name + r_array.offset + a_rray.offset;
+				push_symbol(a_rray);
+				break;
+			}
+			case 56://assign_sentence -> ID array = expression ;
+			{
+				E comma = pop_symbol();
+				E expression = pop_symbol();
+				E assign = pop_symbol();
+				E a_rray = pop_symbol();
+				E ID = pop_symbol();
+				E assign_sentence = E(reduct_p.left);
+				assign_sentence.real_name = get_newtemp(true, a_rray.offset);
+				code.emit("=", expression.real_name, "_", assign_sentence.real_name);
+				push_symbol(assign_sentence);
+				break;
+			}
+			case 57://factor -> ID array
+			{
+				E r_array = pop_symbol();
+				E id = pop_symbol();
+				E factor = E(reduct_p.left);
+				factor.real_name = get_newtemp(true, r_array.offset);
+				push_symbol(factor);
+				break;
+			}
 			default:
 				int pop_symbol_num = reduct_p.right.size();
 				for (int i = 0; i < pop_symbol_num; i++) 
@@ -1088,12 +1149,11 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 		{
 			cout<<"成功";
 			acc = true;
-			Func f = search_func("program");
+			Func f = search_func("main");
 			pop_symbol();
 			E n = pop_symbol();
-
 			code.back_patch(n.nextList, f.startaddr);
-			code.output_code("zcode.txt");
+			code.output_code("D:\\programing\\visual studio code\\C++\\compile\\resources\\code.txt");
 			break;
 		}
 	}
@@ -1103,34 +1163,15 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 	}
 }
 
-
-void Parser::output_production(const char* filename)
-{
-	ofstream fout;
-	fout.open(filename);
-	if (!fout.is_open()) output_error("文件" + string(filename) + "打开失败");
-	for (int i = 0; i < productions.size(); i++)
-	{
-		Production p = productions[i];
-		fout << p.left << " -> ";
-		for (int i = 0; i < p.right.size();++i)
-		{
-			fout << p.right[i] << " ";
-		}
-		fout << endl;
+vector<pair<int, string> >Parser::get_funcenter() {
+	vector<pair<int, string> >ret;
+	for (vector<Func>::iterator iter = funcTable.begin(); iter != funcTable.end(); iter++) {
+		ret.push_back(pair<int, string>(iter->startaddr, iter->name));
 	}
-	fout.close();
+	sort(ret.begin(), ret.end());
+	return ret;
 }
 
-//主函数
-int main()
-{
-	ofstream out("zresult.txt");
-	Parser parser("zproductions.txt");
-	//parser.output_action_goto("zaction_goto.txt");
-	//parser.output_dfa("zdfa.txt");
-	parser.analyse_e("zword.txt", out);
-	getchar();
-	return 0;
+IntermediateCode Parser::get_code() {
+	return code;
 }
-

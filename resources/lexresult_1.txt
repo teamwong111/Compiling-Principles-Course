@@ -1,0 +1,1 @@
+void ID main ( void ) { int ID a ; int ID b ; ID a = NUM 3 ; ID b = ID a + NUM 1 ; return ; } # 

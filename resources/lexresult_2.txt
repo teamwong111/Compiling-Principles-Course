@@ -1,0 +1,1 @@
+void ID main ( void ) { int ID a [ NUM 2 ] [ NUM 2 ] ; ID a [ NUM 0 ] [ NUM 0 ] = NUM 3 ; ID a [ NUM 0 ] [ NUM 1 ] = ID a [ NUM 0 ] [ NUM 0 ] + NUM 1 ; ID a [ NUM 1 ] [ NUM 0 ] = ID a [ NUM 0 ] [ NUM 0 ] + ID a [ NUM 0 ] [ NUM 1 ] ; return ; } # 

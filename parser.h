@@ -1,4 +1,3 @@
-
 #include "IntermediateCode.h"
 
 //当前状态和读取符号
@@ -21,8 +20,8 @@ struct Production
 //项目
 struct Item
 {
-	int pid;
-	int pointidx;//.的位置
+	unsigned int pid;
+	unsigned int pointidx;//.的位置
 	friend bool operator ==(const Item& one, const Item& other);
 	friend bool operator <(const Item& one, const Item& other);
 };
@@ -31,14 +30,14 @@ struct Item
 struct DFA
 {
 	vector<set<Item> > states;
-	map<Goto, int> goTo;
+	map<Goto, unsigned int> goTo;
 };
 
 //状态转移
 struct Move
 {
 	Act act;
-	int nextstate;
+	unsigned int nextstate;
 };
 
 //变量
@@ -69,6 +68,7 @@ public:
 	list<int> falseList;
 	list<string> alist;
 	int quad;
+	string offset; //数组偏移
 	E(string name);
 	E(string name, string real_name);
 };
@@ -105,7 +105,7 @@ public:
 	void output_dfa(const char*);				//输出DFA
 	void output_action_goto(const char*);		//输出action_goto表
 
-	string get_newtemp();						//新的临时变量
+	string get_newtemp(bool isarray, string offset);//新的临时变量
 	E pop_symbol();								//pop & get top
 	void push_symbol(E);						//push
 	void analyse_e(const char*, ofstream&);		//语义分析
@@ -114,4 +114,7 @@ public:
 	list<int> merge(list<int>&, list<int>&);	//合并
 	void output_stack(ofstream& out);			//输出符号栈、状态栈
 	void output_production(const char*);		//输出产生式
+
+	vector<pair<int, string> > get_funcenter();
+	IntermediateCode get_code();
 };
