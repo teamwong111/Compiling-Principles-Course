@@ -1121,7 +1121,8 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 				E a_rray = pop_symbol();
 				E ID = pop_symbol();
 				E assign_sentence = E(reduct_p.left);
-				assign_sentence.real_name = get_newtemp(true, a_rray.offset);
+				// assign_sentence.real_name = get_newtemp(true, a_rray.offset);
+				assign_sentence.real_name = ID.real_name + a_rray.offset;
 				code.emit("=", expression.real_name, "_", assign_sentence.real_name);
 				push_symbol(assign_sentence);
 				break;
@@ -1131,7 +1132,8 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 				E r_array = pop_symbol();
 				E id = pop_symbol();
 				E factor = E(reduct_p.left);
-				factor.real_name = get_newtemp(true, r_array.offset);
+				// factor.real_name = get_newtemp(true, r_array.offset);
+				factor.real_name = id.real_name + r_array.offset;
 				push_symbol(factor);
 				break;
 			}
