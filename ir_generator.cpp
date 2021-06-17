@@ -1,4 +1,4 @@
-#include "IntermediateCode.h"
+#include "ir_generator.h"
 
 Quaternion::Quaternion() {}
 
@@ -13,22 +13,22 @@ Quaternion::Quaternion(string op, string src1, string src2, string des) {
 }
 
 //形成四元式
-void IntermediateCode::emit(string op, string src1, string src2, string des) {
+void IRGenerator::emit(string op, string src1, string src2, string des) {
     code.push_back(Quaternion(op, src1, src2, des));
 }
 
 // back_patch
-void IntermediateCode::back_patch(list<int> nextList, int quad) {
+void IRGenerator::back_patch(list<int> nextList, int quad) {
     for (auto& nl : nextList) {
         code[nl].des = to_string(quad);
     }
 }
 
 // nextquad
-int IntermediateCode::get_nextquad() { return code.size(); }
+int IRGenerator::get_nextquad() { return code.size(); }
 
 //输出中间代码
-void IntermediateCode::output_code(const char* fileName) {
+void IRGenerator::output_code(const char* fileName) {
     ofstream fout;
     fout.open(fileName);
     if (!fout.is_open()) {
@@ -39,14 +39,15 @@ void IntermediateCode::output_code(const char* fileName) {
         fout << i << "( " << code[i].op << " , " << code[i].src1 << " , "
              << code[i].src2 << " , " << code[i].des << " )" << endl;
     }
+    cout << "中间代码生成成功" << endl;
     fout.close();
 }
 
-IntermediateCode::IntermediateCode() { name_index = 1; }
+IRGenerator::IRGenerator() { name_index = 1; }
 
-string IntermediateCode::get_block_name() { return string("Label") + to_string(name_index++); }
+string IRGenerator::get_block_name() { return string("Label") + to_string(name_index++); }
 
-void IntermediateCode::divide_block(vector<pair<int, string> > func_start) {
+void IRGenerator::divide_block(vector<pair<int, string> > func_start) {
     for (unsigned int i = 0; i < func_start.size(); ++i) {
         //记录所有基本块的入口点
         priority_queue<int, vector<int>, greater<int> > baseblock_start;  
@@ -125,7 +126,7 @@ void IntermediateCode::divide_block(vector<pair<int, string> > func_start) {
     }
 }
 
-map<string, vector<Block> > IntermediateCode::get_func_blocks() {
+map<string, vector<Block> > IRGenerator::get_func_blocks() {
 	return func_blocks;
 }
 

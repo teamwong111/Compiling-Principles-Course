@@ -1,9 +1,9 @@
 #pragma once
-#include "IntermediateCode.h"
+#include "ir_generator.h"
 
 //保存临时常数 t0 t1寄存器
 //保存函数的返回值 v0寄存器
-class ObjectCodeGenerator {
+class ObjectGenerator {
 private:
 	map<string, string> irop_ocop = { { "j>=", "bge " }, { "j>", "bgt " }, { "j==", "beq " }, 
 									  { "j!=", "bne " }, { "j<", "blt " }, { "j<=", "ble " },
@@ -24,20 +24,17 @@ private:
 	int present_quaternion_index;
 	vector<string>object_codes;
 public:
-	ObjectCodeGenerator();
-	void store_reg_var(string reg, string var);
-	void store_oul_var(set<string> outl);
-	void release_var(string var);
-	string allocate_des_reg();
-	string allocate_src_reg();
-	string allocate_src_reg(string var);
-
-	void block_addinfo(map<string, vector<Block> > funcBlocks);	
-	
-	void generate_codes();
-	void generate_base_block();
-	void generate_quaternion(int &arg_num, list<pair<string, bool> > &par_list);
-	
-	void output_object_codes(const char* fileName);
-	void output_blocks(ostream& out);
+	ObjectGenerator();
+	void store_reg_var(string reg, string var);//保存寄存器变量
+	void store_oul_var(set<string> outl);//保存出口活跃变量
+	void release_var(string var);//释放变量
+	string allocate_des_reg();//分配目的操作数寄存器
+	string allocate_src_reg();//分配源操作数寄存器
+	string allocate_src_reg(string var);//分配源操作数寄存器
+	void block_addinfo(map<string, vector<Block> > funcBlocks);//添加待用、活跃信息
+	void generate_codes();//代码生成
+	void generate_base_block();//基本块代码生成
+	void generate_quaternion(int &arg_num, list<pair<string, bool> > &par_list);//四元式代码生成
+	void output_object_codes(const char* fileName);//输出
+	void output_blocks(ostream& out);//输出
 };

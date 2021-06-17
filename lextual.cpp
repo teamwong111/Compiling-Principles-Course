@@ -67,7 +67,7 @@ bool Lextual::isLetter(char a)
 		return true;
 	return false;
 }
-
+//生成dfa
 Response Lextual::dfa(const char* resultname)
 {
 	string result = "result:\n";
@@ -353,26 +353,26 @@ Response Lextual::dfa(const char* resultname)
 	if (res_state == 1)
 	{
 		out << lextualResult;
+		out.close();
+		cout << "词法分析成功" << endl;
 	}
 	else
 	{
 		out << "failure!";
+		out.close();
+		exit(-1);
 	}
-	out.close();
-	cout << lextualResult << endl;
 	response.result = result;
 	response.state = res_state;
 	return response;
 }
-
-void Lextual::readfile(string filename)
+//读取文件
+void Lextual::readfile(const char* filename)
 {
-	char file_name[100];
-	strcpy(file_name, filename.c_str());
-	file = fopen(file_name, "r+");
+	file = fopen(filename, "r+");
 }
-
-Response Lextual::getResult(string filename, const char* resultname)
+//获取词法分析结果
+Response Lextual::getResult(const char* filename, const char* resultname)
 {
 	Response response;
 	readfile(filename);

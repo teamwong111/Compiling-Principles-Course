@@ -23,16 +23,10 @@ bool operator ==(const Item& one, const Item& other)
 }
 
 //构造函数，执行相关函数
-Parser::Parser(const char* filename)
+Parser::Parser()
 {
 	now_level = 0;
 	temp_var = 0;
-	read_grammars(filename);
-	get_first();
-	get_follow();
-	get_itemsets();
-	get_action_goto();
-	// output_action_goto("D:\\programing\\visual studio code\\C++\\compile\\resources\\action_goto.txt");
 }
 
 //是否是终结符
@@ -133,14 +127,6 @@ void Parser::get_first()
 			}
 		}
 	}
-	// cout << "first:\n";
-	// for (auto& fi : first) {
-	// 	cout << fi.first << " ";
-	// 	for (auto& ri : fi.second) {
-	// 		cout << ri << " ";
-	// 	}
-	// 	cout << endl;
-	// }
 }
 
 //获取follow集
@@ -216,14 +202,6 @@ void Parser::get_follow()
 			}
 		}
 	}
-	// cout << "follow:\n";
-	// for (auto& fi : follow) {
-	// 	cout << fi.first << " ";
-	// 	for (auto& ri : fi.second) {
-	// 		cout << ri << " ";
-	// 	}
-	// 	cout << endl;
-	// }
 }
 
 //获取闭包
@@ -456,16 +434,12 @@ void Parser::analyse(const char* filename)
 void Parser::output_error(string s)
 {
 	cerr << s << endl;
-	//exit(-1);
-	getchar();
-	getchar();
+	exit(-1);
 }
 
 //获取新的临时变量
-string Parser::get_newtemp(bool isarray, string offset) 
+string Parser::get_newtemp() 
 {
-	if (isarray) 
-		return string("A") + offset;
 	return string("T") + to_string(temp_var++);
 }
 
@@ -484,7 +458,7 @@ void Parser::push_symbol(E temp)
 	symbol_stack_e.push(temp);
 	if (action_goto.count(Goto(state_stack.top(), temp.name)) == 0) 
 	{
-		output_error(string("语法错误5"));
+		output_error(string("action goto错误"));
 	}
 	Move move = action_goto[Goto(state_stack.top(), temp.name)];
 	state_stack.push(move.nextstate);
@@ -563,7 +537,7 @@ list<int> Parser::merge(list<int>& l1, list<int>& l2)
 }
 
 //语义分析和生成中间代码
-void Parser::analyse_e(const char* filename, ofstream& out) 
+void Parser::analyse_e(const char* filename, const char* irname) 
 {
 	bool acc = false;
 	symbol_stack_e.push(E("#"));
@@ -592,11 +566,11 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 
 	for (unsigned int i = 0; i < words.size();)
 	{
-		output_stack(out);
+		// output_stack(out);
 		if (action_goto.count(Goto(state_stack.top(), words[i])) == 0) 
 		{
 			cout << i << words[i] << state_stack.top();
-			output_error(string("语法错误1"));	
+			output_error(string("action goto错误"));	
 		}
 		Move move = action_goto[Goto(state_stack.top(), words[i])];
 		if (move.act == shift) 
@@ -961,7 +935,7 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 				E add = pop_symbol();
 				E item = pop_symbol();
 				E add_expression1 = E(reduct_p.left);
-				add_expression1.real_name = get_newtemp(false, "");
+				add_expression1.real_name = get_newtemp();
 				code.emit("+", item.real_name, add_expression2.real_name, add_expression1.real_name);
 				push_symbol(add_expression1);
 				break;
@@ -972,7 +946,7 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 				E sub = pop_symbol();
 				E item = pop_symbol();
 				E add_expression1 = E(reduct_p.left);
-				add_expression1.real_name = get_newtemp(false, "");
+				add_expression1.real_name = get_newtemp();
 				code.emit("-", item.real_name, add_expression2.real_name, add_expression1.real_name);
 				push_symbol(add_expression1);
 				break;
@@ -991,7 +965,7 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 				E mul = pop_symbol();
 				E factor = pop_symbol();
 				E item1 = E(reduct_p.left);
-				item1.real_name = get_newtemp(false, "");
+				item1.real_name = get_newtemp();
 				code.emit("*", factor.real_name, item2.real_name, item1.real_name);
 				push_symbol(item1);
 				break;
@@ -1002,7 +976,7 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 				E div = pop_symbol();
 				E factor = pop_symbol();
 				E item1 = E(reduct_p.left);
-				item1.real_name = get_newtemp(false, "");
+				item1.real_name = get_newtemp();
 				code.emit("/", factor.real_name, item2.real_name, item1.real_name);
 				push_symbol(item1);
 				break;
@@ -1035,7 +1009,7 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 				Func f = search_func(ID.real_name);
 				if (f.name == "null")
 				{
-					output_error(string("语法错误2"));
+					output_error(string("找不到某函数"));
 				}
 				else if (argument_list.alist.size()!=f.paramtype.size()) 
 				{
@@ -1047,7 +1021,7 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 					{
 						code.emit("par", (*iter), "_", "_");
 					}
-					factor.real_name = get_newtemp(false, "");
+					factor.real_name = get_newtemp();
 					code.emit("call", ID.real_name, "_", "_");
 					code.emit("=", "@RETURN_PLACE", "_", factor.real_name);
 
@@ -1060,7 +1034,7 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 				E ID = pop_symbol();
 				if (search_var(ID.real_name).name == "null") 
 				{
-					output_error(string("语法错误4"));
+					output_error(string("找不到某变量"));
 				}
 				E factor = E(reduct_p.left);
 				factor.real_name = ID.real_name;
@@ -1121,7 +1095,6 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 				E a_rray = pop_symbol();
 				E ID = pop_symbol();
 				E assign_sentence = E(reduct_p.left);
-				// assign_sentence.real_name = get_newtemp(true, a_rray.offset);
 				assign_sentence.real_name = ID.real_name + a_rray.offset;
 				code.emit("=", expression.real_name, "_", assign_sentence.real_name);
 				push_symbol(assign_sentence);
@@ -1132,7 +1105,6 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 				E r_array = pop_symbol();
 				E id = pop_symbol();
 				E factor = E(reduct_p.left);
-				// factor.real_name = get_newtemp(true, r_array.offset);
 				factor.real_name = id.real_name + r_array.offset;
 				push_symbol(factor);
 				break;
@@ -1149,13 +1121,13 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 		}
 		else if (move.act == accept)//P ::= N declare_list 
 		{
-			cout<<"成功";
+			cout << "语法语义分析成功" << endl;
 			acc = true;
 			Func f = search_func("main");
 			pop_symbol();
 			E n = pop_symbol();
 			code.back_patch(n.nextList, f.startaddr);
-			code.output_code("D:\\programing\\visual studio code\\C++\\compile\\resources\\code.txt");
+			code.output_code(irname);
 			break;
 		}
 	}
@@ -1165,7 +1137,7 @@ void Parser::analyse_e(const char* filename, ofstream& out)
 	}
 }
 
-vector<pair<int, string> >Parser::get_funcenter() {
+vector<pair<int, string> >Parser::get_funcstart() {
 	vector<pair<int, string> >ret;
 	for (vector<Func>::iterator iter = funcTable.begin(); iter != funcTable.end(); iter++) {
 		ret.push_back(pair<int, string>(iter->startaddr, iter->name));
@@ -1174,6 +1146,15 @@ vector<pair<int, string> >Parser::get_funcenter() {
 	return ret;
 }
 
-IntermediateCode Parser::get_code() {
+IRGenerator Parser::get_ir() {
 	return code;
+}
+
+void Parser::get_result(const char* prodname,  const char* lexname, const char* irname) {
+	read_grammars(prodname);
+	get_first();
+	get_follow();
+	get_itemsets();
+	get_action_goto();
+	analyse_e(lexname, irname);
 }

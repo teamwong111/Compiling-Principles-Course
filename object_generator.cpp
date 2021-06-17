@@ -1,4 +1,4 @@
-#include "ObjectCodeGenerator.h"
+#include "object_generator.h"
 
 bool is_var(string name) {
 	return isalpha(name[0]);
@@ -15,9 +15,9 @@ bool is_control(string op) {
 	return false;
 }
 
-ObjectCodeGenerator::ObjectCodeGenerator() {}
+ObjectGenerator::ObjectGenerator() {}
 
-void ObjectCodeGenerator::block_addinfo(map<string, vector<Block> > funcBlocks) {
+void ObjectGenerator::block_addinfo(map<string, vector<Block> > funcBlocks) {
 	for (auto& fb : funcBlocks) {
 		vector<Block> base_blocks = fb.second;
 		vector<set<string> >func_block_inl, func_block_outl, func_block_def;
@@ -107,7 +107,7 @@ void ObjectCodeGenerator::block_addinfo(map<string, vector<Block> > funcBlocks) 
 	}
 }
 
-void ObjectCodeGenerator::generate_codes() {
+void ObjectGenerator::generate_codes() {
 	object_codes.push_back("lui $sp,0x1001");
 	object_codes.push_back("j main");
 	for (auto& fb : func_blocks) {
@@ -122,7 +122,7 @@ void ObjectCodeGenerator::generate_codes() {
 	object_codes.push_back("end:");
 }
 
-void ObjectCodeGenerator::generate_base_block() {
+void ObjectGenerator::generate_base_block() {
 	// 初始化
 	Avalue.clear();
 	Rvalue.clear();
@@ -171,7 +171,7 @@ void ObjectCodeGenerator::generate_base_block() {
 	}
 }
 
-void ObjectCodeGenerator::generate_quaternion(int &arg_num, list<pair<string, bool> > &par_list) {
+void ObjectGenerator::generate_quaternion(int &arg_num, list<pair<string, bool> > &par_list) {
 	if (present_quaternion.op[0] != 'j' && present_quaternion.op != "call") {
 		if (is_var(present_quaternion.src1) && Avalue[present_quaternion.src1].empty()) {
 			cout << (string("变量") + present_quaternion.src1 + "在引用前未赋值");
@@ -268,7 +268,7 @@ void ObjectCodeGenerator::generate_quaternion(int &arg_num, list<pair<string, bo
 	}
 }
 
-void ObjectCodeGenerator::store_oul_var(set<string> outl) {
+void ObjectGenerator::store_oul_var(set<string> outl) {
 	for (auto& ol : outl) {
 		string reg;
 		bool in_memory = false;
@@ -287,7 +287,7 @@ void ObjectCodeGenerator::store_oul_var(set<string> outl) {
 	}
 }
 
-void ObjectCodeGenerator::store_reg_var(string reg, string var) {
+void ObjectGenerator::store_reg_var(string reg, string var) {
 	if (var_storepos.find(var) != var_storepos.end()) {//如果已经为变量分配好了存储空间
 		object_codes.push_back(string("sw ") + reg + " " + to_string(var_storepos[var]) + "($sp)");
 	}
@@ -299,7 +299,7 @@ void ObjectCodeGenerator::store_reg_var(string reg, string var) {
 	Avalue[var].insert(var);
 }
 
-void ObjectCodeGenerator::release_var(string var) {
+void ObjectGenerator::release_var(string var) {
 	for (auto& a_var : Avalue[var]) {
 		if (a_var[0] == '$') {
 			Rvalue[a_var].erase(var);
@@ -311,7 +311,7 @@ void ObjectCodeGenerator::release_var(string var) {
 	Avalue[var].clear();
 }
 
-string ObjectCodeGenerator::allocate_des_reg() {
+string ObjectGenerator::allocate_des_reg() {
 	//A:=B op C
 	if (!is_num(present_quaternion.src1)) {
 		for (auto& r_var : Avalue[present_quaternion.src1]) {
@@ -331,7 +331,7 @@ string ObjectCodeGenerator::allocate_des_reg() {
 	return ret;
 }
 
-string ObjectCodeGenerator::allocate_src_reg(string var) {
+string ObjectGenerator::allocate_src_reg(string var) {
 	if (is_num(var)) {
 		string ret = allocate_src_reg();
 		object_codes.push_back(string("addi ") + ret + " $zero " + var);
@@ -352,7 +352,7 @@ string ObjectCodeGenerator::allocate_src_reg(string var) {
 	return ret;
 }
 
-string ObjectCodeGenerator::allocate_src_reg() {
+string ObjectGenerator::allocate_src_reg() {
 	//如果有尚未分配的寄存器，则从中选取一个Ri为所需要的寄存器R
 	string ret;
 	if (free_register.size()) {
@@ -429,7 +429,7 @@ string ObjectCodeGenerator::allocate_src_reg() {
 	return ret;
 }
 
-void ObjectCodeGenerator::output_blocks(ostream& out) {
+void ObjectGenerator::output_blocks(ostream& out) {
 	for (auto& fb : func_blocks) {
 		out << "[" << fb.first << "]" << endl;
 		for (unsigned int i = 0; i < fb.second.size(); ++i) {
@@ -446,7 +446,7 @@ void ObjectCodeGenerator::output_blocks(ostream& out) {
 	}
 }
 
-void ObjectCodeGenerator::output_object_codes(const char* fileName) {
+void ObjectGenerator::output_object_codes(const char* fileName) {
 	ofstream fout;
 	fout.open(fileName);
 	if (!fout.is_open()) {
@@ -456,6 +456,7 @@ void ObjectCodeGenerator::output_object_codes(const char* fileName) {
 	for (unsigned int i = 0; i < object_codes.size(); ++i) {
 		fout << object_codes[i] << endl;
 	}
+	cout << "目标代码生成成功" << endl;
 	fout.close();
 }
 

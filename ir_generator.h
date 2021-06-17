@@ -13,12 +13,14 @@
 #include <queue>
 using namespace std;
 
+// 信息
 struct Info {
 	int pending;//待用信息
 	bool active;//活跃信息
 };
 
-class Quaternion 
+// 四元式
+class Quaternion
 {
 public:
 	string op;//操作数
@@ -31,6 +33,7 @@ public:
 	void output(ostream& out);
 };
 
+// 基本块
 struct Block {
 	string name;//基本块的名称
 	vector<Quaternion> codes;//基本块中的四元式
@@ -38,20 +41,20 @@ struct Block {
 	int next2;//基本块的下一连接块
 };
 
-
-class IntermediateCode 
+// 中间代码生成器
+class IRGenerator 
 {
 private:
-	int name_index;	
+	int name_index;
 	vector<Quaternion> code;//中间代码
-	map<string, vector<Block> > func_blocks;
+	map<string, vector<Block> > func_blocks;//函数块
 public:
-	IntermediateCode();
+	IRGenerator();
 	void emit(string, string, string, string);//形成四元式
-	void back_patch(list<int>, int);//back_patch
+	void back_patch(list<int>, int);//回填
 	void output_code(const char*);//输出中间代码
-	int get_nextquad();//nextquad
-	string get_block_name();
+	int get_nextquad();//下一四元式编号
+	string get_block_name();//获取基本块名
 	void divide_block(vector<pair<int, string> > func_enter);//划分基本快
-	map<string, vector<Block> > get_func_blocks();
+	map<string, vector<Block> > get_func_blocks();//获取函数块
 };

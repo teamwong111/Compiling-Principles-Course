@@ -1,19 +1,14 @@
 # Compiling-Principles-Course
-这是我在同济大学编译原理课程（2020-2021）的大作业
+这是我在同济大学编译原理课程（2021春）的大作业
 
 ---
 
 ## 目录
-- 注意
-- 简介
-- 项目目录结构
-- 维护者
-- License
-
----
-
-## 注意
-项目还没有完全完成，且目前上传部分存在很多问题.
+- [简介](#简介)
+- [项目目录结构](#项目目录结构)
+- [运行](#运行)
+- [维护者](#维护者)
+- [License](#License)
 
 ---
 
@@ -23,7 +18,6 @@
 2. 语法分析器
 3. 语义分析器
 4. 中间代码生成器
-5. 代码优化器
 6. 目标代码生成器
 
 ---
@@ -31,11 +25,29 @@
 ## 项目目录结构
 ```bash
 .
-├─IntermediateCode.cpp  //中间代码生成器
-├─IntermediateCode.h
-├─parser.cpp    //语法分析器 & 语义分析器
-├─parser.h
+│  ir_generator.cpp
+│  ir_generator.h
+│  lextual.cpp
+│  lextual.h
+│  main.cpp
+│  object_generator.cpp
+│  object_generator.h
+│  parser.cpp
+│  parser.h
+│
+└─resources
+        productions.txt
+        right_test.txt
+        wrong_test.txt
 ```
+
+---
+
+## 运行
+- 操作系统：Windows10
+- 编译器：g++ (i686-win32-dwarf-rev0, Built by MinGW-W64 project) 8.1.0
+- 编译命令：g++ *.cpp -o D:\\compiler.exe -g -Wall -static-libgcc -fexec-charset=GBK -std=c++11
+
 ---
 
 ## 维护者
